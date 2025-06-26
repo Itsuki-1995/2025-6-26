@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.v3.mapper.BookingMapper">
+
+    <resultMap id="bookingResultMap" type="Booking">
+        <id property="id" column="id"/>
+        <result property="userId" column="user_id"/>
+        <result property="courtId" column="court_id"/>
+        <result property="bookingDate" column="booking_date"/>
+        <result property="timeSlot" column="time_slot"/>
+        <result property="status" column="status"/>
+        <result property="createTime" column="create_time"/>
+        <result property="updateTime" column="update_time"/>
+        <result property="username" column="username"/>
+        <result property="realName" column="real_name"/>
+        <result property="courtName" column="court_name"/>
+        <result property="courtNumber" column="court_number"/>
+    </resultMap>
+
+    <select id="findAllWithDetails" resultMap="bookingResultMap">
+        SELECT b.*, u.username, u.real_name, c.court_name, c.court_number
+        FROM booking b
+        LEFT JOIN user u ON b.user_id = u.id
+        LEFT JOIN court c ON b.court_id = c.id
+        ORDER BY b.create_time DESC
+    </select>
+
+    <select id="findByUserId" resultMap="bookingResultMap">
+        SELECT b.*, u.username, u.real_name, c.court_name, c.court_number
+        FROM booking b
+        LEFT JOIN user u ON b.user_id = u.id
+        LEFT JOIN court c ON b.court_id = c.id
+        WHERE b.user_id = #{userId}
+        ORDER BY b.create_time DESC
+    </select>
+
+    <select id="findById" resultMap="bookingResultMap">
+        SELECT b.*, u.username, u.real_name, c.court_name, c.court_number
+        FROM booking b
+        LEFT JOIN user u ON b.user_id = u.id
+        LEFT JOIN court c ON b.court_id = c.id
+        WHERE b.id = #{id}
+    </select>
+
+    <insert id="insert" parameterType="Booking" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO booking (user_id, court_id, booking_date, time_slot, status)
+        VALUES (#{userId}, #{courtId}, #{bookingDate}, #{timeSlot}, #{status})
+    </insert>
+
+    <update id="updateStatus">
+        UPDATE booking SET status = #{status} WHERE id = #{id}
+    </update>
+
+    <update id="update" parameterType="Booking">
+        UPDATE booking 
+        SET court_id = #{courtId}, 
+            booking_date = #{bookingDate}, 
+            time_slot = #{timeSlot}
+        WHERE id = #{id}
+    </update>
+
+    <delete id="deleteById">
+        DELETE FROM booking WHERE id = #{id}
+    </delete>
+
+    <select id="findByCondition" resultMap="bookingResultMap">
+        SELECT b.*, u.username, u.real_name, c.court_name, c.court_number
+        FROM booking b
+        LEFT JOIN user u ON b.user_id = u.id
+        LEFT JOIN court c ON b.court_id = c.id
+        <where>
+            <if test="userId != null">
+                AND b.user_id = #{userId}
+            </if>
+            <if test="courtId != null">
+                AND b.court_id = #{courtId}
+            </if>
+            <if test="bookingDate != null and bookingDate != ''">
+                AND b.booking_date = #{bookingDate}
+            </if>
+            <if test="timeSlot != null and timeSlot != ''">
+                AND b.time_slot = #{timeSlot}
+            </if>
+            <if test="status != null and status != ''">
+                AND b.status = #{status}
+            </if>
+            <if test="studentName != null and studentName != ''">
+                AND u.real_name LIKE CONCAT('%', #{studentName}, '%')
+            </if>
+        </where>
+        ORDER BY b.create_time DESC
+    </select>
+
+    <select id="findByDateAndTimeSlot" resultMap="bookingResultMap">
+        SELECT b.*, u.username, u.real_name, c.court_name, c.court_number
+        FROM booking b
+        LEFT JOIN user u ON b.user_id = u.id
+        LEFT JOIN court c ON b.court_id = c.id
+        WHERE b.booking_date = #{bookingDate} AND b.time_slot = #{timeSlot}
+        ORDER BY b.create_time DESC
+    </select>
+
+    <select id="getCourtStats" resultType="CourtStats">
+        SELECT 
+            b.court_id as courtId,
+            b.time_slot as timeSlot,
+            COUNT(*) as count,
+            c.court_name as courtName
+        FROM booking b
+        LEFT JOIN court c ON b.court_id = c.id
+        WHERE b.status = 'confirmed'
+        GROUP BY b.court_id, b.time_slot, c.court_name
+        ORDER BY b.court_id, b.time_slot
+    </select>
+
+    <select id="getTodayBookings" resultType="int">
+        SELECT COUNT(*)
+        FROM booking
+        WHERE DATE(booking_date) = CURDATE() AND status = 'confirmed'
+    </select>
+
+    <select id="getWeekBookings" resultType="int">
+        SELECT COUNT(*)
+        FROM booking
+        WHERE YEARWEEK(booking_date) = YEARWEEK(CURDATE()) AND status = 'confirmed'
+    </select>
+
+    <select id="getMonthBookings" resultType="int">
+        SELECT COUNT(*)
+        FROM booking
+        WHERE YEAR(booking_date) = YEAR(CURDATE()) 
+        AND MONTH(booking_date) = MONTH(CURDATE()) 
+        AND status = 'confirmed'
+    </select>
+
+</mapper> 

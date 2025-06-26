@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.v3.mapper.CourtMapper">
+
+    <!-- 场地结果映射配置 -->
+    <!-- 将数据库字段映射到Court对象的属性 -->
+    <resultMap id="courtResultMap" type="Court">
+        <id property="id" column="id"/>                    <!-- 场地ID -->
+        <result property="courtNumber" column="court_number"/> <!-- 场地编号 -->
+        <result property="courtName" column="court_name"/> <!-- 场地名称 -->
+        <result property="status" column="status"/>        <!-- 场地状态 -->
+        <result property="createTime" column="create_time"/> <!-- 创建时间 -->
+    </resultMap>
+
+    <!-- 查询所有场地 -->
+    <!-- 用于预约页面显示可用场地列表 -->
+    <select id="findAll" resultMap="courtResultMap">
+        SELECT * FROM court ORDER BY court_number
+    </select>
+
+    <!-- 根据ID查询单个场地 -->
+    <!-- 用于编辑场地信息时获取场地详情 -->
+    <select id="findById" resultMap="courtResultMap">
+        SELECT * FROM court WHERE id = #{id}
+    </select>
+
+    <!-- 根据状态查询场地 -->
+    <!-- 用于筛选特定状态的场地（如只显示可用场地） -->
+    <select id="findByStatus" resultMap="courtResultMap">
+        SELECT * FROM court WHERE status = #{status} ORDER BY court_number
+    </select>
+
+    <!-- 插入新场地 -->
+    <!-- 管理员添加新场地时使用 -->
+    <insert id="insert" parameterType="Court" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO court (court_number, court_name, status)
+        VALUES (#{courtNumber}, #{courtName}, #{status})
+    </insert>
+
+    <!-- 更新场地信息 -->
+    <!-- 管理员修改场地信息时使用 -->
+    <update id="update" parameterType="Court">
+        UPDATE court 
+        SET court_number = #{courtNumber}, court_name = #{courtName}, status = #{status}
+        WHERE id = #{id}
+    </update>
+
+    <!-- 删除场地 -->
+    <!-- 管理员删除场地时使用 -->
+    <delete id="deleteById">
+        DELETE FROM court WHERE id = #{id}
+    </delete>
+
+    <!-- 检查预约冲突 -->
+    <!-- 用于验证指定场地、日期、时间段是否已被预约 -->
+    <!-- 返回冲突的预约数量，大于0表示有冲突 -->
+    <select id="checkConflict" resultType="int">
+        SELECT COUNT(*) FROM booking 
+        WHERE court_id = #{courtId}           <!-- 场地ID -->
+        AND booking_date = #{bookingDate}     <!-- 预约日期 -->
+        AND time_slot = #{timeSlot}           <!-- 时间段 -->
+        AND status != 'cancelled'             <!-- 排除已取消的预约 -->
+    </select>
+
+    <!-- 检查预约冲突（排除指定预约） -->
+    <!-- 用于修改预约时检查冲突，排除当前预约本身 -->
+    <!-- 返回冲突的预约数量，大于0表示有冲突 -->
+    <select id="checkConflictExcludeSelf" resultType="int">
+        SELECT COUNT(*) FROM booking 
+        WHERE court_id = #{courtId}           <!-- 场地ID -->
+        AND booking_date = #{bookingDate}     <!-- 预约日期 -->
+        AND time_slot = #{timeSlot}           <!-- 时间段 -->
+        AND status != 'cancelled'             <!-- 排除已取消的预约 -->
+        AND id != #{excludeId}                <!-- 排除指定的预约ID -->
+    </select>
+
+</mapper> 

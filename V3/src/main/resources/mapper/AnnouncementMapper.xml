@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.v3.mapper.AnnouncementMapper">
+
+    <resultMap id="announcementResultMap" type="Announcement">
+        <id property="id" column="id"/>
+        <result property="title" column="title"/>
+        <result property="content" column="content"/>
+        <result property="adminId" column="admin_id"/>
+        <result property="status" column="status"/>
+        <result property="createTime" column="create_time"/>
+        <result property="updateTime" column="update_time"/>
+        <result property="adminName" column="admin_name"/>
+    </resultMap>
+
+    <select id="findAllWithDetails" resultMap="announcementResultMap">
+        SELECT a.*, u.real_name as admin_name
+        FROM announcement a
+        LEFT JOIN user u ON a.admin_id = u.id
+        ORDER BY a.create_time DESC
+    </select>
+
+    <select id="findActive" resultMap="announcementResultMap">
+        SELECT a.*, u.real_name as admin_name
+        FROM announcement a
+        LEFT JOIN user u ON a.admin_id = u.id
+        WHERE a.status = 'active'
+        ORDER BY a.create_time DESC
+    </select>
+
+    <select id="findById" resultMap="announcementResultMap">
+        SELECT a.*, u.real_name as admin_name
+        FROM announcement a
+        LEFT JOIN user u ON a.admin_id = u.id
+        WHERE a.id = #{id}
+    </select>
+
+    <insert id="insert" parameterType="Announcement" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO announcement (title, content, admin_id, status)
+        VALUES (#{title}, #{content}, #{adminId}, #{status})
+    </insert>
+
+    <update id="update" parameterType="Announcement">
+        UPDATE announcement 
+        SET title = #{title}, content = #{content}, status = #{status}
+        WHERE id = #{id}
+    </update>
+
+    <delete id="deleteById">
+        DELETE FROM announcement WHERE id = #{id}
+    </delete>
+
+    <update id="updateStatus">
+        UPDATE announcement SET status = #{status} WHERE id = #{id}
+    </update>
+
+    <select id="searchByTitle" resultMap="announcementResultMap">
+        SELECT a.*, u.real_name as admin_name
+        FROM announcement a
+        LEFT JOIN user u ON a.admin_id = u.id
+        WHERE a.title LIKE CONCAT('%', #{title}, '%')
+        ORDER BY a.create_time DESC
+    </select>
+
+</mapper> 
